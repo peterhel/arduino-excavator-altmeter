@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebSocket demo</title>
+</head>
+
+<body style="margin:0">
+    <canvas id="myCanvas" width="200" height="100"></canvas>
+
+    <div style="display: flex; height:100vh; width: 100vw;place-content: center;place-items: center;">
+        <div id="val" style="display: flex;"></div>
+    </div>
+    <script>
+        var c = document.getElementById("myCanvas");
+        c.width = window.innerWidth;
+        var ctx = c.getContext("2d");
+        ctx.translate(0, c.height / 2);
+        var ws = new WebSocket("ws://127.0.0.1:5678/"),
+            val = document.getElementById('val'),
+            lastY = 0,
+            x = -1,
+            valMax = 100,
+            yCenter = c.height / 2,
+            yFactor = yCenter / valMax
+
+        let incX = () => {
+            if (x === c.width) {
+                incX = () => {
+                    let imageData = ctx.getImageData(0,0, c.width, c.height);
+                    ctx.clearRect(0,  -yCenter, c.width, c.height);
+                    ctx.putImageData(imageData, -1, 0)
+                }
+                return;
+            }
+            x++;
+        }
+
+        let data;
+
+        let renderGraph = () => {
+            incX();
+            ctx.beginPath();
+            val.innerText = Math.round(data*100)/100;
+            ctx.moveTo(x, lastY * yFactor * -1);
+            ctx.lineTo(x, data * yFactor * -1);
+            lastY = data;
+            ctx.stroke();
+
+
+        }
+
+        ws.onmessage = function (event) {
+            data = event.data;
+            window.requestAnimationFrame(renderGraph)
+            // renderGraph()
+            // console.log(x, c.width);
+        };
+    </script>
+</body>
+
+</html>
