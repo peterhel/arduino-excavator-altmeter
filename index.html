@@ -3,32 +3,71 @@
 
 <head>
     <title>WebSocket demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        #page {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            place-content: center;
+            place-items: center;
+            flex-direction: column;
+        }
+
+        #val {
+            /* display: flex; */
+            /* height: 100vh; */
+            /* width: 100vw; */
+            place-content: center;
+            place-items: center;
+            font-family: sans-serif;
+            font-weight: bold;
+            font-size: 6rem;
+            flex-grow: 1;
+        }
+
+        #myCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
 </head>
 
 <body style="margin:0">
-    <canvas id="myCanvas" width="200" height="100"></canvas>
-
-    <div style="display: flex; height:100vh; width: 100vw;place-content: center;place-items: center;">
-        <div id="val" style="display: flex;"></div>
+    <div id="page">
+        <div style="position: relative; flex-grow: 1;width:100%">
+            <div id="val" style="display: flex;"></div>
+            <canvas id="myCanvas" width="200" height="100"></canvas>
+        </div>
+        <button id="btn_setgroundlevel">CALIBRATE</button>
     </div>
     <script>
-        var c = document.getElementById("myCanvas");
-        c.width = window.innerWidth;
-        var ctx = c.getContext("2d");
+        let imgBucket = new Image();
+        imgBucket.src = 'https://41eeok47lu7i3ysz8x3ncs9j-wpengine.netdna-ssl.com/wp-content/uploads/2018/11/Excavator-Bucket-Icon.svg';
+
+        let c = document.getElementById("myCanvas");
+        c.width = c.parentElement.clientWidth;
+        c.height = c.parentElement.clientHeight;
+
+        let ctx = c.getContext("2d");
         ctx.translate(0, c.height / 2);
-        var ws = new WebSocket("ws://127.0.0.1:5678/"),
+        let ws = new WebSocket("ws://127.0.0.1:5678/"),
             val = document.getElementById('val'),
             lastY = 0,
             x = -1,
             valMax = 100,
             yCenter = c.height / 2,
-            yFactor = yCenter / valMax
+            yFactor = yCenter / valMax,
+            groundLevel = 0,
+            groundValue = 0,
+            decimals = 1;
 
         let incX = () => {
             if (x === c.width) {
                 incX = () => {
-                    let imageData = ctx.getImageData(0,0, c.width, c.height);
-                    ctx.clearRect(0,  -yCenter, c.width, c.height);
+                    let imageData = ctx.getImageData(0, 0, c.width, c.height);
+                    ctx.clearRect(0, -yCenter, c.width, c.height);
                     ctx.putImageData(imageData, -1, 0)
                 }
                 return;
@@ -38,20 +77,73 @@
 
         let data;
 
-        let renderGraph = () => {
-            incX();
+        function round() {
+            let x = 10 * decimals;
+            return Math.round((data - groundLevel) * x) / x
+        }
+
+        function renderBucket() {
+            ctx.drawImage(imgBucket, (c.width / 2) - (imgBucket.width / 2), yCenter - (imgBucket.height / 2));
+         }//data * yFactor * -1;
+
+        let currentY;
+
+        function renderGroundLevel() {
             ctx.beginPath();
-            val.innerText = Math.round(data*100)/100;
+            // val.innerText = round();
+            ctx.moveTo(0, groundValue);
+            ctx.lineTo(c.width, groundValue);
+            ctx.stroke();
+        }
+
+        let lastRender = performance.now()
+        let now;
+        let renderGraph = () => {
+            now = performance.now();
+            if(now - lastRender < 100){
+                return;
+            }
+            lastRender = now;
+            ctx.clearRect(0, -yCenter, c.width, c.height);
+            incX();
+            renderBucket();
+            ctx.beginPath();
+            currentY = round()
+            val.innerText = currentY;
             ctx.moveTo(x, lastY * yFactor * -1);
             ctx.lineTo(x, data * yFactor * -1);
             lastY = data;
             ctx.stroke();
+            renderGroundLevel()
+        }
 
+        let button = document.getElementById('btn_setgroundlevel')
+
+        function showSetGroundLevelButton() {
 
         }
 
+        function handleSetGroundLevel() {
+            groundLevel = currentY;
+            groundValue = currentY * yFactor * -1;
+            console.log(`Ground level at: ${currentY}, ground value at: ${groundValue}`);
+            renderGraph();
+        }
+
+        button.addEventListener('click', handleSetGroundLevel);
+
+        function animateBig(value) {
+            showSetGroundLevelButton(true);
+        }
+
+        let showBig;
+
         ws.onmessage = function (event) {
-            data = event.data;
+            clearTimeout(showBig);
+            showBig = setTimeout(() => {
+                animateBig(event.data);
+            }, 250);
+            data = parseFloat(event.data);
             window.requestAnimationFrame(renderGraph)
             // renderGraph()
             // console.log(x, c.width);
