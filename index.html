@@ -100,7 +100,7 @@
         let now;
         let renderGraph = () => {
             now = performance.now();
-            if(now - lastRender < 100){
+            if(now - lastRender < 50){
                 return;
             }
             lastRender = now;
@@ -124,8 +124,8 @@
         }
 
         function handleSetGroundLevel() {
-            groundLevel = currentY;
-            groundValue = currentY * yFactor * -1;
+            groundLevel = data;
+            groundValue = data * yFactor * -1;
             console.log(`Ground level at: ${currentY}, ground value at: ${groundValue}`);
             renderGraph();
         }

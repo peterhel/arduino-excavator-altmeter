@@ -64,8 +64,8 @@ async def time(websocket, path):
         await websocket.send(str(y[index]))
         await asyncio.sleep(1/25)
         index = index + 1
-        # if index % 20 == 0:
-            # await asyncio.sleep(5)
+        if index % 17 == 0:
+            await asyncio.sleep(2)
 
 start_server = websockets.serve(time, "127.0.0.1", 5678, process_request=process_request)
 
