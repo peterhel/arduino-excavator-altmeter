@@ -1,0 +1,12 @@
+HTTP/1.1 200 OK
+Date: Tue, 28 Apr 2020 20:53:06 GMT
+Vary: Accept-Encoding
+X-Frame-Options: SAMEORIGIN
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=63072000
+Content-Type: text/html; charset=UTF-8
+Content-Encoding: gzip
+Content-Length: 1817
+Connection: keep-alive
+Accept-Ranges: bytes
+

@@ -4,9 +4,23 @@
 <head>
     <title>WebSocket demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8"/>
     <style>
+        body {
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            color: wheat
+        }
+        #header {
+            font-size: 2rem;
+            padding: 1rem;
+            background-color: #21242B;
+            width: 100%;
+            color: white;
+            text-align: center;
+        }
         #page {
             display: flex;
+            background-color: #34393D;
             height: 100vh;
             width: 100vw;
             place-content: center;
@@ -24,6 +38,25 @@
             font-weight: bold;
             font-size: 6rem;
             flex-grow: 1;
+            z-index: 1;
+        }
+
+        #footer {
+            width: 100%;
+            display: flex;
+            place-content: center;
+        }
+
+        #btn_setgroundlevel {
+            border: 2px solid whitesmoke;
+            background-color: #21242B;
+            color: whitesmoke;
+            padding: 1rem;
+            flex: 1;
+            height: 8rem;
+            /* width: 100%; */
+            /* margin: 1rem; */
+            font-size: 1.5rem;
         }
 
         #myCanvas {
@@ -33,18 +66,19 @@
         }
     </style>
 </head>
-
+<!-- <img id="img_bucket" src="https://img.favpng.com/18/7/22/scalable-vector-graphics-social-media-youtube-logo-png-favpng-X24i5zHCJkRER9Uik7KY0htRs.jpg" /> -->
 <body style="margin:0">
     <div id="page">
-        <div style="position: relative; flex-grow: 1;width:100%">
+        <div id="header">GRÄVCHEFEN</div>
+        <div style="display: flex; position: relative; flex-grow: 1;width:100%">
             <div id="val" style="display: flex;"></div>
             <canvas id="myCanvas" width="200" height="100"></canvas>
         </div>
-        <button id="btn_setgroundlevel">CALIBRATE</button>
+        <div id="footer"><button id="btn_setgroundlevel">CALIBRATE</button></div>
     </div>
     <script>
         let imgBucket = new Image();
-        imgBucket.src = 'https://41eeok47lu7i3ysz8x3ncs9j-wpengine.netdna-ssl.com/wp-content/uploads/2018/11/Excavator-Bucket-Icon.svg';
+        imgBucket.src = 'bucket.png';
 
         let c = document.getElementById("myCanvas");
         c.width = c.parentElement.clientWidth;
@@ -55,7 +89,7 @@
         let ws = new WebSocket("ws://127.0.0.1:5678/"),
             val = document.getElementById('val'),
             lastY = 0,
-            x = -1,
+            x = c.width /2,
             valMax = 100,
             yCenter = c.height / 2,
             yFactor = yCenter / valMax,
@@ -64,15 +98,16 @@
             decimals = 1;
 
         let incX = () => {
-            if (x === c.width) {
-                incX = () => {
-                    let imageData = ctx.getImageData(0, 0, c.width, c.height);
-                    ctx.clearRect(0, -yCenter, c.width, c.height);
-                    ctx.putImageData(imageData, -1, 0)
-                }
-                return;
-            }
-            x++;
+            x = c.width / 2;
+            // if (x === c.width) {
+            //     incX = () => {
+            //         let imageData = ctx.getImageData(0, 0, c.width, c.height);
+            //         ctx.clearRect(0, -yCenter, c.width, c.height);
+            //         ctx.putImageData(imageData, -1, 0)
+            //     }
+            //     return;
+            // }
+            // x++;
         }
 
         let data;
@@ -83,7 +118,7 @@
         }
 
         function renderBucket() {
-            ctx.drawImage(imgBucket, (c.width / 2) - (imgBucket.width / 2), yCenter - (imgBucket.height / 2));
+            ctx.drawImage(imgBucket, x - 100, (data * yFactor * -1)-200, 848 * .45, 497*.45);
          }//data * yFactor * -1;
 
         let currentY;
@@ -95,26 +130,33 @@
             ctx.lineTo(c.width, groundValue);
             ctx.stroke();
         }
+        let strVal;
+        function setVal() {
+            strVal = currentY.toFixed(2);
+            val.innerText = strVal;
+        }
 
         let lastRender = performance.now()
         let now;
         let renderGraph = () => {
+            window.requestAnimationFrame(renderGraph)
             now = performance.now();
-            if(now - lastRender < 50){
+            if(now - lastRender < 25){
                 return;
             }
             lastRender = now;
             ctx.clearRect(0, -yCenter, c.width, c.height);
-            incX();
+            // incX();
             renderBucket();
-            ctx.beginPath();
+            // ctx.beginPath();
             currentY = round()
-            val.innerText = currentY;
-            ctx.moveTo(x, lastY * yFactor * -1);
-            ctx.lineTo(x, data * yFactor * -1);
+            setVal()
+            
+            // ctx.moveTo(x, lastY * yFactor * -1);
+            // ctx.lineTo(x, data * yFactor * -1);
             lastY = data;
-            ctx.stroke();
-            renderGroundLevel()
+            // ctx.stroke();
+            renderGroundLevel();
         }
 
         let button = document.getElementById('btn_setgroundlevel')
@@ -139,15 +181,16 @@
         let showBig;
 
         ws.onmessage = function (event) {
-            clearTimeout(showBig);
-            showBig = setTimeout(() => {
-                animateBig(event.data);
-            }, 250);
+            // clearTimeout(showBig);
+            // showBig = setTimeout(() => {
+                // animateBig(event.data);
+            // }, 250);
             data = parseFloat(event.data);
-            window.requestAnimationFrame(renderGraph)
             // renderGraph()
             // console.log(x, c.width);
         };
+
+        renderGraph();
     </script>
 </body>
 

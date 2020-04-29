@@ -1,24 +1,35 @@
+#include "./Adafruit_MPL3115A2.h"
+#include <Wire.h>
+Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
+
 int offset = 102; // zero pressure calibrate
 int fullScale = 922; // max pressure calibrate
 float pressure; // final pressure
 
 int analogPin = A0;
-//int val = 0;
+int val = 0;
 void setup() {
   Serial.begin(9600);
 
 }
 
 void loop() {
-//  val = analogRead(analogPin);
-//  Serial.print("Well");
-//  Serial.println(val);
-
-  pressure = (analogRead(A0) - offset) * 6.89476  / (fullScale - offset); // pressure conversion
-  Serial.print("Pressure is  ");
-  Serial.print(pressure);
-  Serial.println("  bar");
-  delay(500);
+if (! baro.begin()) {
+    Serial.println("Couldnt find sensor");
+    return;
+  }
+ 
+  float pascals = baro.getPressure();
+  // Our weather page presents pressure in Inches (Hg)
+  // Use http://www.onlineconversion.com/pressure.htm for other units
+  Serial.print(pascals/3377); Serial.println(" Inches (Hg)");
+ 
+  float altm = baro.getAltitude();
+  Serial.print(altm); Serial.println(" meters");
+ 
+  float tempC = baro.getTemperature();
+  Serial.print(tempC); Serial.println("*C");
+   delay(250);
 }
 
 
